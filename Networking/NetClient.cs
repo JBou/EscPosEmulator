@@ -67,6 +67,12 @@ public class NetClient
         }
     }
 
-    private static void HandleIncomingData(ReadOnlySpan<byte> data) =>
-        App.Printer?.FeedEscPos(Encoding.Latin1.GetString(data));
+    private static void HandleIncomingData(ReadOnlySpan<byte> data)
+    {
+        // Convert bytes to Latin1 string (preserves byte values 0-255 as Unicode characters)
+        // This makes debugging much easier while maintaining correct encoding behavior
+        var latin1String = Encoding.Latin1.GetString(data);
+
+        App.Printer?.FeedEscPos(latin1String);
+    }
 }

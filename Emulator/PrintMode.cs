@@ -12,6 +12,8 @@ public class PrintMode
     public bool Emphasize;
     public bool Italic;
     public UnderlineMode Underline;
+    public CharacterSet CharacterSet;
+    public CharacterCodeTable CharacterCodeTable;
 
     public PrintMode()
     {
@@ -29,7 +31,10 @@ public class PrintMode
         CharWidthScale = 1;
         CharHeightScale = 1;
         Justification = TextJustification.Left;
+        CharacterSet = CharacterSet.USA;
+        CharacterCodeTable = CharacterCodeTable.PC437;
     }
+    
     public override bool Equals(object? obj)
     {
         if (ReferenceEquals(this, obj))
@@ -44,11 +49,18 @@ public class PrintMode
             && Justification == other.Justification
             && Emphasize == other.Emphasize
             && Italic == other.Italic
-            && Underline == other.Underline;
+            && Underline == other.Underline
+            && CharacterSet == other.CharacterSet
+            && CharacterCodeTable == other.CharacterCodeTable;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Font, CharWidthScale, CharHeightScale, Justification, Emphasize, Italic, Underline);
+        // HashCode.Combine can't take more than 8 arguments, so we combine in two steps
+        var hash1 = HashCode.Combine(
+            Font, CharWidthScale, CharHeightScale, Justification, 
+            Emphasize, Italic, Underline);
+            
+        return HashCode.Combine(hash1, CharacterSet, CharacterCodeTable);
     }
 }

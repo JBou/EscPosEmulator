@@ -1,0 +1,6 @@
+@.Rt!�aBestellungd!a Zeit: 06.01.2026 22:04     Nr: 12
+Tisch 98     Kellner: admind! 1 x Wei�wein Glas                  3.50    3.50
+! 2 x Almh�ttchen Lik�r              4.00    8.00
+! 1 x Grauk�se                      10.00   10.00
+
+!8aSumme: 21,50��d! aVielen Dank f�r Ihre BestellungdV

@@ -50,7 +50,7 @@ public class EscPosInterpreter
         RegisterCommand(new ItalicOnCommand());
         RegisterCommand(new SelectFontCommand());
         RegisterCommand(new SelectCharsetCommand());
-        RegisterCommand(new SelectCharTableCommand()); 
+        RegisterCommand(new SelectCharTableCommand());
         RegisterCommand(new SelectJustificationCommand());
         RegisterCommand(new SetDefaultLineSpacingCommand());
         RegisterCommand(new SetLineSpacingCommand());
@@ -61,11 +61,11 @@ public class EscPosInterpreter
         RegisterCommand(new PaperPartialCut()); // 0x1B, 0x69
         RegisterCommand(new PaperPrintFeednLines()); // 0x1B, 0x64
         RegisterCommand(new PaperPrintFeed()); // 0x1B, 0x4A
-        
+
         // FS = 0x1C
         RegisterCommand(new PrintStoredLogo()); // 0x1C, 0x70, n, m
         RegisterCommand(new PaperAutoCut()); // 0x1C, 0x7D, 0x60, n
-        
+
         // GS = 0x1D
         RegisterCommand(new SelectCharacterSizeCommand());
         RegisterCommand(new SelectCutModeAndCutCommand());
@@ -95,12 +95,13 @@ public class EscPosInterpreter
         FinalizePrintBuffer();
         FinalizeCommandBuffer();
     }
-    
+
     private string FinalizePrintBuffer()
     {
-        var result = _printBuffer.ToString();
+        var latin1Text = _printBuffer.ToString();
+        var decodedText = _printer.GetDecodedFromLatin1(latin1Text);
         _printBuffer.Clear();
-        return result;
+        return decodedText;
     }
 
     private string FinalizeCommandBuffer()
@@ -131,7 +132,8 @@ public class EscPosInterpreter
                 {
                     var finalArgs = FinalizeCommandBuffer();
 
-                    Logger.Info($"Execute [{_activeCommand.GetType().Name}] with args [{(finalArgs.Length > 8 ? $"{finalArgs[..8]}..." : finalArgs)}]");
+                    Logger.Info(
+                        $"Execute [{_activeCommand.GetType().Name}] with args [{(finalArgs.Length > 8 ? $"{finalArgs[..8]}..." : finalArgs)}]");
 
                     _activeCommand.Execute(_printer, finalArgs);
                     _activeCommand = null;
@@ -153,12 +155,12 @@ public class EscPosInterpreter
                 // Check if we have a complete command prefix that we can evaluate
                 if (commandText.Length >= 2 && (commandText[0] == ESC || commandText[0] == FS || commandText[0] == GS))
                 {
-                    if (_commandRegistry.ContainsKey(commandText))
+                    if (_commandRegistry.TryGetValue(commandText, out var command))
                     {
                         // Found matching registered command
-                        _activeCommand = _commandRegistry[commandText];
+                        _activeCommand = command;
                         _activeCommand.Reset();
-                        
+
                         _commandBuffer.Clear();
 
                         if (_activeCommand.HasArgs)
@@ -186,7 +188,7 @@ public class EscPosInterpreter
                         _commandBuffer.Clear();
                         _interpretingCommandPrefix = false;
                     }
-                    
+
                     continue;
                 }
 
@@ -264,12 +266,12 @@ public class EscPosInterpreter
     {
         // Determine how many argument bytes to skip based on command type
         int argsToSkip = 0;
-        
+
         if (commandText.Length >= 2)
         {
             char prefix = commandText[0];
             char command = commandText[1];
-            
+
             if (prefix == ESC)
             {
                 // Most ESC commands take 1 argument byte
@@ -286,7 +288,7 @@ public class EscPosInterpreter
                 argsToSkip = 1;
             }
         }
-        
+
         _bytesToSkip = argsToSkip;
         Logger.Warn($"Skipping unsupported command: {commandText} (skipping {argsToSkip} arg bytes)");
     }

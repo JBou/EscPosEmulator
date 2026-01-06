@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Text;
+using System.Windows;
 using ReceiptPrinterEmulator.Emulator;
 using ReceiptPrinterEmulator.Networking;
 
@@ -8,7 +9,13 @@ namespace ReceiptPrinterEmulator
     {
         public static ReceiptPrinter? Printer = null;
         public static NetServer? Server = null;
-        
+
+        static App()
+        {
+            // Register code pages provider to support legacy encodings (e.g., PC437, PC850, PC858)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
         private void App_OnStartup(object sender, StartupEventArgs e)
         {
             Printer = new ReceiptPrinter(PaperConfiguration.Default);

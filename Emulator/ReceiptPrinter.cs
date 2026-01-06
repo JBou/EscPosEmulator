@@ -39,19 +39,18 @@ public class ReceiptPrinter
 
     #region ESC/POS
 
-    public void FeedEscPos(string ascii)
+    public void FeedEscPos(string data)
     {
-        if (ascii.Length>10000)
+        if (data.Length > 10000)
         {
-            File.WriteAllText("last_ticket.bin", ascii, Encoding.ASCII);
+            File.WriteAllText("last_ticket.txt", data, Encoding.Latin1);
         }
-        File.WriteAllText("last_escpos_receive.txt", ascii, Encoding.ASCII);
+        File.WriteAllText("last_escpos_receive.txt", data, Encoding.Latin1);
 
         try
         {
-            Logger.Info($"Received: {ascii}");
-            _escPosInterpreter.Interpret(ascii);
-            
+            Logger.Info($"Received: {data} (CodePage: {_printMode.CharacterCodeTable.GetCodePageNumber()})");
+            _escPosInterpreter.Interpret(data);
         }
         catch (Exception ex)
         {
@@ -59,6 +58,21 @@ public class ReceiptPrinter
         }
 
         OnActivityEvent?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Converts a Latin1 string (which preserves original byte values 0-255) to a decoded string using the current codepage
+    /// </summary>
+    public string GetDecodedFromLatin1(string latin1Text)
+    {
+        var codePage = _printMode.CharacterCodeTable.GetCodePageNumber();
+        
+        // Convert Latin1 string back to bytes (preserves byte values 0-255)
+        var bytes = Encoding.Latin1.GetBytes(latin1Text);
+        
+        // Decode using the target codepage (e.g., PC858 for German)
+        var targetEncoding = Encoding.GetEncoding(codePage);
+        return targetEncoding.GetString(bytes);
     }
 
     #endregion
@@ -96,6 +110,8 @@ public class ReceiptPrinter
         SelectEmphasizeMode(false);
         SelectItalicMode(false);
         SelectUnderlineMode(UnderlineMode.Off);
+        SelectCharacterSet(CharacterSet.USA);
+        SelectCharacterCodeTable(CharacterCodeTable.PC437);
         SetDefaultLineSpacing();
         SetDefaultTabSpacing();
     }
@@ -226,5 +242,27 @@ public class ReceiptPrinter
         PrintText(tabs);
     }
 
+    /// <summary>
+    /// Selects a character set using ESC R command
+    /// </summary>
+    public void SelectCharacterSet(CharacterSet charSet)
+    {
+        Logger.Info($"Select character set: {charSet}");
+        
+        _printMode.CharacterSet = charSet;
+        CurrentReceipt.ChangeFontConfiguration(_printMode);
+    }
+    
+    /// <summary>
+    /// Selects a character code table using ESC t command
+    /// </summary>
+    public void SelectCharacterCodeTable(CharacterCodeTable codeTable)
+    {
+        Logger.Info($"Select character code table: {codeTable}");
+        
+        _printMode.CharacterCodeTable = codeTable;
+        CurrentReceipt.ChangeFontConfiguration(_printMode);
+    }
+    
     #endregion
 }
