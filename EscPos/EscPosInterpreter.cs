@@ -21,6 +21,7 @@ public class EscPosInterpreter
     private bool _interpretingCommandPrefix;
     private bool _interpretingCommandArgs;
     private BaseCommand? _activeCommand;
+    private int _bytesToSkip;
 
     public EscPosInterpreter(ReceiptPrinter printer)
     {
@@ -34,6 +35,7 @@ public class EscPosInterpreter
         _interpretingCommandPrefix = false;
         _interpretingCommandArgs = false;
         _activeCommand = null;
+        _bytesToSkip = 0;
 
         RegisterCommands();
     }
@@ -143,48 +145,58 @@ public class EscPosInterpreter
 
             if (_interpretingCommandPrefix)
             {
-                // Reading command prefix: keep reading until we find a match or hit _maxCommandPrefixLength
+                // Reading command prefix: keep reading until we find a match or can determine it's unsupported
                 _commandBuffer.Append(currentChar);
 
                 var commandText = _commandBuffer.ToString();
 
-                if (commandText.Length > _maxCommandPrefixLength)
+                // Check if we have a complete command prefix that we can evaluate
+                if (commandText.Length >= 2 && (commandText[0] == ESC || commandText[0] == FS || commandText[0] == GS))
                 {
-                	string byteText;
-                	
-                	if (i > 0) byteText = string.Format("0x{0:X2} 0x{1:X2}", (int)ascii[i - 1], (int)ascii[i]);
-                	else byteText = string.Format("0x{0:X2}", (int)ascii[i]);
-                	
-                	throw new InvalidOperationException("Invalid or unsupported command encountered: " + byteText);
-                }
-
-                if (_commandRegistry.ContainsKey(commandText))
-                {
-                    // Found matching registered command
-                    _activeCommand = _commandRegistry[commandText];
-                    _activeCommand.Reset();
-                    
-                    _commandBuffer.Clear();
-
-                    if (_activeCommand.HasArgs)
+                    if (_commandRegistry.ContainsKey(commandText))
                     {
-                        // This command has arguments: begin interpreting those
-                        _interpretingCommandPrefix = false;
-                        _interpretingCommandArgs = true;
+                        // Found matching registered command
+                        _activeCommand = _commandRegistry[commandText];
+                        _activeCommand.Reset();
+                        
+                        _commandBuffer.Clear();
+
+                        if (_activeCommand.HasArgs)
+                        {
+                            // This command has arguments: begin interpreting those
+                            _interpretingCommandPrefix = false;
+                            _interpretingCommandArgs = true;
+                        }
+                        else
+                        {
+                            // This command has NO arguments: execute immediately and return to normal mode
+                            _interpretingCommandPrefix = false;
+                            _interpretingCommandArgs = false;
+
+                            Logger.Info($"Execute [{_activeCommand.GetType().Name}]");
+
+                            _activeCommand.Execute(_printer, null);
+                            _activeCommand = null;
+                        }
                     }
                     else
                     {
-                        // This command has NO arguments: execute immediately and return to normal mode
+                        // Command prefix not registered - skip this unsupported command
+                        SkipUnsupportedCommand(commandText);
+                        _commandBuffer.Clear();
                         _interpretingCommandPrefix = false;
-                        _interpretingCommandArgs = false;
-
-                        Logger.Info($"Execute [{_activeCommand.GetType().Name}]");
-
-                        _activeCommand.Execute(_printer, null);
-                        _activeCommand = null;
                     }
+                    
+                    continue;
                 }
 
+                // Keep reading if we haven't reached a point where we can evaluate the command
+                continue;
+            }
+
+            if (_bytesToSkip > 0)
+            {
+                _bytesToSkip--;
                 continue;
             }
 
@@ -246,6 +258,37 @@ public class EscPosInterpreter
 
             #endregion
         }
+    }
+
+    private void SkipUnsupportedCommand(string commandText)
+    {
+        // Determine how many argument bytes to skip based on command type
+        int argsToSkip = 0;
+        
+        if (commandText.Length >= 2)
+        {
+            char prefix = commandText[0];
+            char command = commandText[1];
+            
+            if (prefix == ESC)
+            {
+                // Most ESC commands take 1 argument byte
+                argsToSkip = 1;
+            }
+            else if (prefix == FS)
+            {
+                // Most FS commands take 0 argument bytes
+                argsToSkip = 0;
+            }
+            else if (prefix == GS)
+            {
+                // GS commands vary, but assume 1 argument byte
+                argsToSkip = 1;
+            }
+        }
+        
+        _bytesToSkip = argsToSkip;
+        Logger.Warn($"Skipping unsupported command: {commandText} (skipping {argsToSkip} arg bytes)");
     }
 
     public static readonly char NUL = Convert.ToChar(0);

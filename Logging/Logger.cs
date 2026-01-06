@@ -10,6 +10,11 @@ public static class Logger
         PrintMessage("Info", values);
     }
     
+    public static void Warn(params object[] values)
+    {
+        PrintMessage("Warn", values);
+    }
+    
     public static void Exception(Exception ex, string? message = null)
     {
         PrintMessage("Exception", new object[] { message ?? string.Empty, ex });
