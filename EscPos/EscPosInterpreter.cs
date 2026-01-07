@@ -153,7 +153,7 @@ public class EscPosInterpreter
                 var commandText = _commandBuffer.ToString();
 
                 // Check if we have a complete command prefix that we can evaluate
-                if (commandText.Length >= 2 && (commandText[0] == ESC || commandText[0] == FS || commandText[0] == GS))
+                if (_commandRegistry.ContainsKey(commandText) || commandText.Length >= _maxCommandPrefixLength)
                 {
                     if (_commandRegistry.TryGetValue(commandText, out var command))
                     {
