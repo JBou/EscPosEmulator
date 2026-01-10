@@ -10,6 +10,8 @@ public class PrintMode
     public int CharHeightScale;
     public TextJustification Justification;
     public bool Emphasize;
+    public bool DoubleStrike;
+    public bool WhiteBlackReverse;
     public bool Italic;
     public UnderlineMode Underline;
     public CharacterSet CharacterSet;
@@ -48,6 +50,8 @@ public class PrintMode
             && CharHeightScale == other.CharHeightScale
             && Justification == other.Justification
             && Emphasize == other.Emphasize
+            && DoubleStrike == other.DoubleStrike
+            && WhiteBlackReverse == other.WhiteBlackReverse
             && Italic == other.Italic
             && Underline == other.Underline
             && CharacterSet == other.CharacterSet
@@ -59,8 +63,8 @@ public class PrintMode
         // HashCode.Combine can't take more than 8 arguments, so we combine in two steps
         var hash1 = HashCode.Combine(
             Font, CharWidthScale, CharHeightScale, Justification, 
-            Emphasize, Italic, Underline);
+            Emphasize, DoubleStrike, WhiteBlackReverse, Italic);
             
-        return HashCode.Combine(hash1, CharacterSet, CharacterCodeTable);
+        return HashCode.Combine(hash1, Underline, CharacterSet, CharacterCodeTable);
     }
 }

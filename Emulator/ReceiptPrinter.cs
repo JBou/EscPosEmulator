@@ -108,12 +108,14 @@ public class ReceiptPrinter
         SelectJustification(TextJustification.Left);
         SelectCharacterSize(1, 1);
         SelectEmphasizeMode(false);
+        SelectDoubleStrikeMode(false);
         SelectItalicMode(false);
         SelectUnderlineMode(UnderlineMode.Off);
         SelectCharacterSet(CharacterSet.USA);
         SelectCharacterCodeTable(CharacterCodeTable.PC437);
         SetDefaultLineSpacing();
         SetDefaultTabSpacing();
+        SelectWhiteBlackReverseMode(false);
     }
 
     public void PrintText(string text)
@@ -176,6 +178,22 @@ public class ReceiptPrinter
         Logger.Info($"Set emphasize mode: {enable}");
 
         _printMode.Emphasize = enable;
+        CurrentReceipt.ChangeFontConfiguration(_printMode);
+    }
+
+    public void SelectDoubleStrikeMode(bool enable)
+    {
+        Logger.Info($"Set double strike mode: {enable}");
+
+        _printMode.DoubleStrike = enable;
+        CurrentReceipt.ChangeFontConfiguration(_printMode);
+    }
+
+    public void SelectWhiteBlackReverseMode(bool enable)
+    {
+        Logger.Info($"Set white/black reverse mode: {enable}");
+
+        _printMode.WhiteBlackReverse = enable;
         CurrentReceipt.ChangeFontConfiguration(_printMode);
     }
 

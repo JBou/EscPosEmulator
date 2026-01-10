@@ -137,13 +137,28 @@ public class ReceiptTextLine : IReceiptPrintable
             g.TranslateTransform(x, offsetY + baselineOffset);
             g.ScaleTransform(mode.CharWidthScale, mode.CharHeightScale);
 
-            g.DrawString(text, font, Brushes.Black, 0, 0, StringFormat.GenericTypographic);
+            // White/black reverse (fill background with black)
+            Brush textBrush = Brushes.Black;
+            if (mode.WhiteBlackReverse)
+            {
+                g.FillRectangle(Brushes.Black, 0, 0, baseSize.Width, baseCharHeight + 4);
+                textBrush = Brushes.White;
+            }
+
+            g.DrawString(text, font, textBrush, 0, 0, StringFormat.GenericTypographic);
+
+            // Double strike (draw text again with slight offset)
+            if (mode.DoubleStrike)
+            {
+                g.DrawString(text, font, textBrush, 1, -1, StringFormat.GenericTypographic);
+            }
 
             // Underline (draw in scaled context)
             if (mode.Underline is UnderlineMode.OnOneDot or UnderlineMode.OnTwoDots)
             {
                 var dotHeight = (mode.Underline is UnderlineMode.OnTwoDots ? 2 : 1);
-                g.DrawLine(new Pen(Color.Black, dotHeight), 0, baseCharHeight*2, baseSize.Width, baseCharHeight*2);
+                var underlineColor = mode.WhiteBlackReverse ? Color.White : Color.Black;
+                g.DrawLine(new Pen(underlineColor, dotHeight), 0, baseCharHeight*2, baseSize.Width, baseCharHeight*2);
             }
 
             g.Restore(state);

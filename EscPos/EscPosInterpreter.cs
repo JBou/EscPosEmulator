@@ -55,6 +55,7 @@ public class EscPosInterpreter
         RegisterCommand(new SetDefaultLineSpacingCommand());
         RegisterCommand(new SetLineSpacingCommand());
         RegisterCommand(new ToggleEmphasizeCommand());
+        RegisterCommand(new ToggleDoubleStrikeCommand());
         RegisterCommand(new ToggleUnderlineCommand());
         RegisterCommand(new SetPrintTextMode()); // 0x1B, 0x21, n
         RegisterCommand(new PaperFullCut()); // 0x1B, 0x6D
@@ -65,10 +66,12 @@ public class EscPosInterpreter
         // FS = 0x1C
         RegisterCommand(new PrintStoredLogo()); // 0x1C, 0x70, n, m
         RegisterCommand(new PaperAutoCut()); // 0x1C, 0x7D, 0x60, n
+        RegisterCommand(new CancelKanjiCharacterModeCommand()); // 0x1C, 0x2E
 
         // GS = 0x1D
         RegisterCommand(new SelectCharacterSizeCommand());
         RegisterCommand(new SelectCutModeAndCutCommand());
+        RegisterCommand(new ToggleWhiteBlackReverseCommand());
         RegisterCommand(new PaperEjectCommand()); // 0x1D, 0x65, n, [m, t]
         RegisterCommand(new PrintRasterBitImageCommand());
     }
